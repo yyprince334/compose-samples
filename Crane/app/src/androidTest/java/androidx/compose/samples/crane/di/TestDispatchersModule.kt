@@ -25,6 +25,7 @@ import dagger.hilt.testing.TestInstallIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestCoroutineDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Module
@@ -34,7 +35,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 )
 class TestDispatchersModule {
 
+    private val testDispatcher = TestCoroutineDispatcher()
+
+    @Provides
+    fun provideTestCoroutineDispatcher(): TestCoroutineDispatcher = testDispatcher
+
+    @Provides
+    @MainDispatcher
+    fun provideMainDispatcher(): CoroutineDispatcher = testDispatcher
+
     @Provides
     @DefaultDispatcher
-    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Unconfined
+    fun provideDefaultDispatcher(): CoroutineDispatcher = testDispatcher
 }

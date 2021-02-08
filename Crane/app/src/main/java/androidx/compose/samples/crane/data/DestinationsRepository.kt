@@ -16,18 +16,46 @@
 
 package androidx.compose.samples.crane.data
 
-import javax.inject.Inject
+import androidx.compose.samples.crane.home.MAX_PEOPLE
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import kotlin.random.Random
 
-class DestinationsRepository @Inject constructor(
-    private val destinationsLocalDataSource: DestinationsLocalDataSource
-) {
-    val destinations: List<ExploreModel> = destinationsLocalDataSource.craneDestinations
-    val hotels: List<ExploreModel> = destinationsLocalDataSource.craneHotels
-    val restaurants: List<ExploreModel> = destinationsLocalDataSource.craneRestaurants
+interface DestinationsRepository {
+    val destinations: List<ExploreModel>
+    val hotels: List<ExploreModel>
+    val restaurants: List<ExploreModel>
 
-    fun getDestination(cityName: String): ExploreModel? {
+    fun getDestination(cityName: String): ExploreModel?
+    suspend fun calculateDestinations(people: Int): List<ExploreModel>
+    suspend fun filterDestinations(destination: String): List<ExploreModel>
+}
+
+open class DestinationsRepositoryImpl(
+    private val destinationsLocalDataSource: DestinationsLocalDataSource,
+    private val defaultDispatcher: CoroutineDispatcher
+): DestinationsRepository {
+    override val destinations: List<ExploreModel> = destinationsLocalDataSource.craneDestinations
+    override val hotels: List<ExploreModel> = destinationsLocalDataSource.craneHotels
+    override val restaurants: List<ExploreModel> = destinationsLocalDataSource.craneRestaurants
+
+    override fun getDestination(cityName: String): ExploreModel? {
         return destinationsLocalDataSource.craneDestinations.firstOrNull {
             it.city.name == cityName
         }
     }
+
+    override suspend fun calculateDestinations(people: Int): List<ExploreModel> =
+        withContext(defaultDispatcher) {
+            if (people > MAX_PEOPLE) {
+                emptyList()
+            } else {
+                destinations.shuffled(Random(people * (1..100).shuffled().first()))
+            }
+        }
+
+    override suspend fun filterDestinations(destination: String): List<ExploreModel> =
+        withContext(defaultDispatcher) {
+            destinations.filter { it.city.nameToDisplay.contains(destination) }
+        }
 }
