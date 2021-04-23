@@ -77,7 +77,7 @@ fun CalendarScreen(
     onBackPressed: () -> Unit,
     calendarViewModel: CalendarViewModel = viewModel()
 ) {
-    val calendarYear = remember(calendarViewModel) { calendarViewModel.calendarYear }
+    val calendarYear = calendarViewModel.calendarYear
 
     CalendarContent(
         selectedDates = calendarViewModel.datesSelected.toString(),
