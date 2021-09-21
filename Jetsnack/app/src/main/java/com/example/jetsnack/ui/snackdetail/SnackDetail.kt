@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
@@ -72,12 +73,14 @@ import com.example.jetsnack.ui.components.SnackCollection
 import com.example.jetsnack.ui.components.SnackImage
 import com.example.jetsnack.ui.theme.JetsnackTheme
 import com.example.jetsnack.ui.theme.Neutral8
+import com.example.jetsnack.ui.utils.LogCompositions
 import com.example.jetsnack.ui.utils.formatPrice
 import com.example.jetsnack.ui.utils.mirroringBackIcon
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 private val BottomBarHeight = 56.dp
 private val TitleHeight = 128.dp
@@ -102,7 +105,10 @@ fun SnackDetail(
         val scroll = rememberScrollState(0)
         Header()
         Body(related, scroll)
-        Title(snack, scroll.value)
+        Title(
+            snack = snack,
+            scrollProvider = { scroll.value }
+        )
         Image(snack.imageUrl, scroll.value)
         Up(upPress)
         CartBottomBar(modifier = Modifier.align(Alignment.BottomCenter))
@@ -237,16 +243,20 @@ private fun Body(
 }
 
 @Composable
-private fun Title(snack: Snack, scroll: Int) {
-    val maxOffset = with(LocalDensity.current) { MaxTitleOffset.toPx() }
-    val minOffset = with(LocalDensity.current) { MinTitleOffset.toPx() }
-    val offset = (maxOffset - scroll).coerceAtLeast(minOffset)
+private fun Title(snack: Snack, scrollProvider: () -> Int) {
+    val maxOffset = with(LocalDensity.current) { MaxTitleOffset.toPx() }.roundToInt()
+    val minOffset = with(LocalDensity.current) { MinTitleOffset.toPx() }.roundToInt()
+    LogCompositions("DetailTitleRecomp")
     Column(
         verticalArrangement = Arrangement.Bottom,
         modifier = Modifier
             .heightIn(min = TitleHeight)
             .statusBarsPadding()
-            .graphicsLayer { translationY = offset }
+            .offset {
+                val scroll = scrollProvider()
+                val offset = (maxOffset - scroll).coerceAtLeast(minOffset)
+                IntOffset(x = 0, y = offset)
+            }
             .background(color = JetsnackTheme.colors.uiBackground)
     ) {
         Spacer(Modifier.height(16.dp))
