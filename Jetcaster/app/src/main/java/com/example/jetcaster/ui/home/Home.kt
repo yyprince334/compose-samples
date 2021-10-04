@@ -77,6 +77,7 @@ import com.example.jetcaster.util.quantityStringResource
 import com.example.jetcaster.util.rememberDominantColorState
 import com.example.jetcaster.util.verticalGradientScrim
 import com.google.accompanist.insets.statusBarsHeight
+import com.google.accompanist.insets.systemBarsPadding
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
@@ -163,7 +164,7 @@ fun HomeContent(
     onCategorySelected: (HomeCategory) -> Unit,
     navigateToPlayer: (String) -> Unit
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = modifier.systemBarsPadding(top = false, bottom = false)) {
         // We dynamically theme this sub-section of the layout to match the selected
         // 'top podcast'
 

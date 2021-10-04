@@ -131,12 +131,17 @@ fun PlayerContent(
                 modifier = Modifier.padding(horizontal = 24.dp)
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                PlayerImage(uiState.podcastImageUrl)
+                PlayerImage(
+                    podcastImageUrl = uiState.podcastImageUrl,
+                    modifier = Modifier.weight(3f)
+                )
                 Spacer(modifier = Modifier.height(32.dp))
-                PodcastDescription(uiState.title, uiState.podcastName)
+                PodcastDescription(uiState.title, uiState.podcastName,)
                 Spacer(modifier = Modifier.height(32.dp))
-                PlayerSlider(uiState.duration)
-                PlayerControls()
+                PlayerControls(
+                    duration = uiState.duration,
+                    modifier = Modifier.weight(2f)
+                )
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
@@ -170,7 +175,10 @@ private fun TopAppBar(onBackPress: () -> Unit) {
 
 @OptIn(ExperimentalCoilApi::class)
 @Composable
-private fun PlayerImage(podcastImageUrl: String) {
+private fun PlayerImage(
+    podcastImageUrl: String,
+    modifier: Modifier = Modifier
+) {
     Image(
         painter = rememberImagePainter(
             data = podcastImageUrl,
@@ -180,7 +188,7 @@ private fun PlayerImage(podcastImageUrl: String) {
         ),
         contentDescription = null,
         contentScale = ContentScale.Crop,
-        modifier = Modifier
+        modifier = modifier
             .sizeIn(maxWidth = 450.dp, maxHeight = 450.dp)
             .aspectRatio(1f)
             .clip(MaterialTheme.shapes.medium)
@@ -219,7 +227,24 @@ private fun PlayerSlider(episodeDuration: Duration?) {
 }
 
 @Composable
-private fun PlayerControls(modifier: Modifier = Modifier) {
+private fun PlayerControls(
+    duration: Duration?,
+    modifier: Modifier = Modifier,
+    sliderFirst: Boolean = true
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        if (sliderFirst) {
+            PlayerSlider(duration)
+            PlayerButtons()
+        } else {
+            PlayerButtons()
+            PlayerSlider(duration)
+        }
+    }
+}
+
+@Composable
+private fun PlayerButtons(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -325,7 +350,7 @@ fun TopAppBarPreview() {
 @Composable
 fun PlayerControlsPreview() {
     JetcasterTheme {
-        PlayerControls()
+        PlayerControls(Duration.ofHours(2))
     }
 }
 
