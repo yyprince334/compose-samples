@@ -58,7 +58,7 @@ class PlayerViewModel(
                 title = episode.title,
                 duration = episode.duration,
                 podcastName = podcast.title,
-                podcastImageUrl =  podcast.imageUrl ?: ""
+                podcastImageUrl = podcast.imageUrl ?: ""
             )
         }
     }

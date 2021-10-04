@@ -22,7 +22,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 
-
 /**
  * This is the minimum amount of calculated contrast for a color to be used on top of the
  * surface color. These values are defined within the WCAG AA guidelines, and we use a value of

@@ -337,7 +337,7 @@ fun PlayerScreenPreview() {
             PlayerScreen(
                 PlayerUiState(
                     title = "Title",
-                    duration = Duration.ofHours(2) ,
+                    duration = Duration.ofHours(2),
                     podcastName = "Podcast"
                 ),
                 onBackPress = { }
