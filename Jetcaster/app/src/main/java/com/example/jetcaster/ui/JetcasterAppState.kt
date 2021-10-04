@@ -20,6 +20,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +35,8 @@ import androidx.navigation.compose.rememberNavController
  */
 sealed class Screen(val route: String) {
     object Home : Screen("home")
-    object Player : Screen("player/{podcastUri}") {
-        fun createRoute(podcastUri: String) = "player/$podcastUri"
+    object Player : Screen("player/{episodeUri}") {
+        fun createRoute(episodeUri: String) = "player/$episodeUri"
     }
 }
 
@@ -56,6 +57,25 @@ class JetcasterAppState(
 
     fun refreshOnline() {
         isOnline = checkIfOnline()
+    }
+
+    fun navigateToPlayer(episodeUri: String) {
+        val newUri = episodeUri.replace("/", "|")
+        navController.navigate(Screen.Player.createRoute(newUri))
+    }
+
+    fun navigateBack() {
+        navController.popBackStack()
+    }
+
+    /**
+     * Revert back the characters that [navigateToPlayer] changed to make the argument compatible
+     * with Navigation.
+     */
+    fun decryptPlayerArgumentUri(bundle: Bundle?) {
+        val uri = bundle?.getString("episodeUri")
+            ?: throw IllegalStateException("`episodeUri` must be present when navigating to Player")
+        bundle.putString("episodeUri", uri.replace("|", "/"))
     }
 
     @Suppress("DEPRECATION")
