@@ -128,20 +128,23 @@ fun PlayerContent(
             TopAppBar(onBackPress = onBackPress)
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 24.dp)
+                modifier = Modifier.padding(horizontal = 8.dp)
             ) {
                 Spacer(modifier = Modifier.weight(1f))
                 PlayerImage(
                     podcastImageUrl = uiState.podcastImageUrl,
-                    modifier = Modifier.weight(3f)
+                    modifier = Modifier.weight(10f)
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 PodcastDescription(uiState.title, uiState.podcastName,)
                 Spacer(modifier = Modifier.height(32.dp))
-                PlayerControls(
-                    duration = uiState.duration,
-                    modifier = Modifier.weight(2f)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(10f)
+                ) {
+                    PlayerSlider(uiState.duration)
+                    PlayerButtons()
+                }
                 Spacer(modifier = Modifier.weight(1f))
             }
         }
@@ -189,7 +192,7 @@ private fun PlayerImage(
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = modifier
-            .sizeIn(maxWidth = 450.dp, maxHeight = 450.dp)
+            .sizeIn(maxWidth = 500.dp, maxHeight = 500.dp)
             .aspectRatio(1f)
             .clip(MaterialTheme.shapes.medium)
     )
@@ -227,32 +230,16 @@ private fun PlayerSlider(episodeDuration: Duration?) {
 }
 
 @Composable
-private fun PlayerControls(
-    duration: Duration?,
-    modifier: Modifier = Modifier,
-    sliderFirst: Boolean = true
-) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        if (sliderFirst) {
-            PlayerSlider(duration)
-            PlayerButtons()
-        } else {
-            PlayerButtons()
-            PlayerSlider(duration)
-        }
-    }
-}
-
-@Composable
 private fun PlayerButtons(modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         val buttonsModifier = Modifier
             .size(48.dp)
-            .padding(8.dp)
             .semantics { role = Role.Button }
 
         Image(
@@ -276,7 +263,6 @@ private fun PlayerButtons(modifier: Modifier = Modifier) {
             colorFilter = ColorFilter.tint(LocalContentColor.current),
             modifier = Modifier
                 .size(72.dp)
-                .padding(8.dp)
                 .semantics { role = Role.Button }
         )
         Image(
@@ -348,9 +334,9 @@ fun TopAppBarPreview() {
 
 @Preview
 @Composable
-fun PlayerControlsPreview() {
+fun PlayerButtonsPreview() {
     JetcasterTheme {
-        PlayerControls(Duration.ofHours(2))
+        PlayerButtons()
     }
 }
 
