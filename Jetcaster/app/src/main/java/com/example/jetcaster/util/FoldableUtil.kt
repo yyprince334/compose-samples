@@ -20,11 +20,14 @@ import android.graphics.Rect
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.flowWithLifecycle
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoRepository.Companion.windowInfoRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 /**
  * Information about a foldable device
@@ -41,7 +44,8 @@ data class FoldableInfo(
 @Composable
 fun ComponentActivity.rememberFoldableInfo(): Flow<FoldableInfo> {
     val windowManager = windowInfoRepository()
-    return remember(this, windowManager) {
+    val coroutineScope = rememberCoroutineScope()
+    return remember(this, coroutineScope, windowManager) {
         windowManager.windowLayoutInfo
             .flowWithLifecycle(this.lifecycle)
             .map { layoutInfo ->
@@ -53,6 +57,11 @@ fun ComponentActivity.rememberFoldableInfo(): Flow<FoldableInfo> {
                     hingePosition = foldingFeature?.bounds
                 )
             }
+            .stateIn(
+                scope = coroutineScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = FoldableInfo()
+            )
     }
 }
 
