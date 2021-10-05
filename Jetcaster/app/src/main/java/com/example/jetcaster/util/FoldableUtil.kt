@@ -17,17 +17,7 @@
 package com.example.jetcaster.util
 
 import android.graphics.Rect
-import androidx.activity.ComponentActivity
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.lifecycle.flowWithLifecycle
 import androidx.window.layout.FoldingFeature
-import androidx.window.layout.WindowInfoRepository.Companion.windowInfoRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 
 /**
  * Information about a foldable device
@@ -38,37 +28,10 @@ data class FoldableInfo(
     val hingePosition: Rect? = null
 )
 
-/**
- * Flow of [FoldableInfo] that emits every time there's a change in the windowLayoutInfo
- */
-@Composable
-fun ComponentActivity.rememberFoldableInfo(): Flow<FoldableInfo> {
-    val windowManager = windowInfoRepository()
-    val coroutineScope = rememberCoroutineScope()
-    return remember(this, coroutineScope, windowManager) {
-        windowManager.windowLayoutInfo
-            .flowWithLifecycle(this.lifecycle)
-            .map { layoutInfo ->
-                val foldingFeature: FoldingFeature? =
-                    layoutInfo.displayFeatures.find { it is FoldingFeature } as? FoldingFeature
-                FoldableInfo(
-                    isInTableTopPosture = isTableTopPosture(foldingFeature),
-                    isInBookPosture = isBookPosture(foldingFeature),
-                    hingePosition = foldingFeature?.bounds
-                )
-            }
-            .stateIn(
-                scope = coroutineScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = FoldableInfo()
-            )
-    }
-}
-
-private fun isTableTopPosture(foldFeature: FoldingFeature?) =
+fun isTableTopPosture(foldFeature: FoldingFeature?) =
     foldFeature?.state == FoldingFeature.State.HALF_OPENED &&
         foldFeature.orientation == FoldingFeature.Orientation.HORIZONTAL
 
-private fun isBookPosture(foldFeature: FoldingFeature?) =
+fun isBookPosture(foldFeature: FoldingFeature?) =
     foldFeature?.state == FoldingFeature.State.HALF_OPENED &&
         foldFeature.orientation == FoldingFeature.Orientation.VERTICAL
