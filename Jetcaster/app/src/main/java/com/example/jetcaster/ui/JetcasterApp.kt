@@ -20,7 +20,6 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -29,11 +28,12 @@ import com.example.jetcaster.R
 import com.example.jetcaster.ui.home.Home
 import com.example.jetcaster.ui.player.PlayerScreen
 import com.example.jetcaster.ui.player.PlayerViewModel
-import com.example.jetcaster.util.TableTopInfo
+import com.example.jetcaster.util.FoldableInfo
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun JetcasterApp(
-    tableTopInfo: State<TableTopInfo>,
+    foldableInfo: Flow<FoldableInfo>,
     appState: JetcasterAppState = rememberJetcasterAppState()
 ) {
     if (appState.isOnline) {
@@ -52,7 +52,7 @@ fun JetcasterApp(
                         defaultArgs = backStackEntry.arguments
                     )
                 )
-                PlayerScreen(playerViewModel, tableTopInfo, onBackPress = appState::navigateBack)
+                PlayerScreen(playerViewModel, foldableInfo, onBackPress = appState::navigateBack)
             }
         }
     } else {

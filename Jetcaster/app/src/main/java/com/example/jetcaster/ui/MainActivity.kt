@@ -21,7 +21,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.core.view.WindowCompat
 import com.example.jetcaster.ui.theme.JetcasterTheme
-import com.example.jetcaster.util.getTableTopInfo
+import com.example.jetcaster.util.rememberFoldableInfo
 import com.google.accompanist.insets.ProvideWindowInsets
 
 class MainActivity : ComponentActivity() {
@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             JetcasterTheme {
                 ProvideWindowInsets {
-                    val tableTopInfo = getTableTopInfo()
+                    val tableTopInfo = rememberFoldableInfo()
                     JetcasterApp(tableTopInfo)
                 }
             }

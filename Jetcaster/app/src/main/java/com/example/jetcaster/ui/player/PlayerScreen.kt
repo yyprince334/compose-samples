@@ -16,6 +16,7 @@
 
 package com.example.jetcaster.ui.player
 
+import android.graphics.Rect
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,15 +53,14 @@ import androidx.compose.material.icons.rounded.PlayCircleFilled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -76,13 +76,13 @@ import com.example.jetcaster.R
 import com.example.jetcaster.ui.theme.JetcasterTheme
 import com.example.jetcaster.ui.theme.MinContrastOfPrimaryVsSurface
 import com.example.jetcaster.util.DynamicThemePrimaryColorsFromImage
-import com.example.jetcaster.util.TableTopInfo
-import com.example.jetcaster.util.TableTopLayout
+import com.example.jetcaster.util.FoldableInfo
 import com.example.jetcaster.util.contrastAgainst
 import com.example.jetcaster.util.rememberDominantColorState
 import com.example.jetcaster.util.verticalGradientScrim
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.systemBarsPadding
+import kotlinx.coroutines.flow.Flow
 import java.time.Duration
 
 /**
@@ -91,11 +91,12 @@ import java.time.Duration
 @Composable
 fun PlayerScreen(
     viewModel: PlayerViewModel,
-    tableTopInfo: State<TableTopInfo>,
+    foldableInfo: Flow<FoldableInfo>,
     onBackPress: () -> Unit
 ) {
     val uiState = viewModel.uiState
-    PlayerScreen(uiState = uiState, tableTopInfo = tableTopInfo, onBackPress = onBackPress)
+    val foldableInfoValue by foldableInfo.collectAsState(initial = FoldableInfo())
+    PlayerScreen(uiState = uiState, foldableInfo = foldableInfoValue, onBackPress = onBackPress)
 }
 
 /**
@@ -104,13 +105,13 @@ fun PlayerScreen(
 @Composable
 private fun PlayerScreen(
     uiState: PlayerUiState,
-    tableTopInfo: State<TableTopInfo>,
+    foldableInfo: FoldableInfo,
     onBackPress: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier) {
         if (uiState.podcastName.isNotEmpty()) {
-            PlayerContent(uiState, tableTopInfo, onBackPress)
+            PlayerContent(uiState, foldableInfo, onBackPress)
         } else {
             FullScreenLoading(modifier)
         }
@@ -121,15 +122,17 @@ private fun PlayerScreen(
 @Composable
 fun PlayerContent(
     uiState: PlayerUiState,
-    tableTopInfo: State<TableTopInfo>,
+    foldableInfo: FoldableInfo,
     onBackPress: () -> Unit
 ) {
     PlayerDynamicTheme(uiState) {
-        val tableTopInfoValue by tableTopInfo
-        if (!tableTopInfoValue.isInTableTopMode) {
+        // As the Player UI content changes considerably when the device is in tabletop posture,
+        // we split the different UIs in different composables. For simpler UIs that don't change
+        // much, prefer one composable that makes decisions based on the mode instead.
+        if (!foldableInfo.isInTableTopPosture) {
             PlayerContentRegular(uiState, onBackPress)
         } else {
-            PlayerContentTableTop(uiState, tableTopInfoValue, onBackPress)
+            PlayerContentTableTop(uiState, foldableInfo, onBackPress)
         }
     }
 }
@@ -178,52 +181,57 @@ private fun PlayerContentRegular(
 @Composable
 private fun PlayerContentTableTop(
     uiState: PlayerUiState,
-    tableTopInfo: TableTopInfo,
+    foldableInfo: FoldableInfo,
     onBackPress: () -> Unit
 ) {
-    TableTopLayout(
-        tableTopInfo = tableTopInfo,
-        modifier = Modifier.fillMaxSize(),
-        topContent = { topContentModifier ->
-            Column(
-                modifier = topContentModifier
-                    .fillMaxWidth()
-                    .verticalGradientScrim(
-                        color = MaterialTheme.colors.primary.copy(alpha = 0.50f),
-                        startYPercentage = 1f,
-                        endYPercentage = 0f
-                    )
-                    .systemBarsPadding(bottom = false)
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                PlayerImage(uiState.podcastImageUrl)
-            }
-        },
-        bottomContent = {
-            Column(
-                modifier = Modifier
-                    .systemBarsPadding(top = false)
-                    .padding(horizontal = 32.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TopAppBar(onBackPress = onBackPress)
-                PodcastDescription(
-                    title = uiState.title,
-                    podcastName = uiState.podcastName,
-                    titleTextStyle = MaterialTheme.typography.h6
+    val hingeRect: Rect = foldableInfo.hingePosition
+        ?: throw IllegalStateException("Bounds should never be null in tabletop mode")
+
+    val hingePosition = with(LocalDensity.current) { hingeRect.top.toDp() }
+    val hingeHeight = with(LocalDensity.current) { (hingeRect.bottom - hingeRect.top).toDp() }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Content for the top part of the screen
+        Column(
+            modifier = Modifier
+                .height(hingePosition)
+                .fillMaxWidth()
+                .verticalGradientScrim(
+                    color = MaterialTheme.colors.primary.copy(alpha = 0.50f),
+                    startYPercentage = 1f,
+                    endYPercentage = 0f
                 )
-                Spacer(modifier = Modifier.weight(0.5f))
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(10f)
-                ) {
-                    PlayerButtons(playerButtonSize = 92.dp, modifier = Modifier.padding(top = 8.dp))
-                    PlayerSlider(uiState.duration)
-                }
+                .systemBarsPadding(bottom = false)
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            PlayerImage(uiState.podcastImageUrl)
+        }
+        // Space for the hinge
+        Spacer(modifier = Modifier.height(hingeHeight))
+        // Content for the table part of the screen
+        Column(
+            modifier = Modifier
+                .systemBarsPadding(top = false)
+                .padding(horizontal = 32.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TopAppBar(onBackPress = onBackPress)
+            PodcastDescription(
+                title = uiState.title,
+                podcastName = uiState.podcastName,
+                titleTextStyle = MaterialTheme.typography.h6
+            )
+            Spacer(modifier = Modifier.weight(0.5f))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(10f)
+            ) {
+                PlayerButtons(playerButtonSize = 92.dp, modifier = Modifier.padding(top = 8.dp))
+                PlayerSlider(uiState.duration)
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -427,14 +435,13 @@ fun PlayerButtonsPreview() {
 fun PlayerScreenPreview() {
     ProvideWindowInsets {
         JetcasterTheme {
-            val tableTopInfo = remember { mutableStateOf(TableTopInfo()) }
             PlayerScreen(
                 PlayerUiState(
                     title = "Title",
                     duration = Duration.ofHours(2),
                     podcastName = "Podcast"
                 ),
-                tableTopInfo = tableTopInfo,
+                foldableInfo = FoldableInfo(),
                 onBackPress = { }
             )
         }
